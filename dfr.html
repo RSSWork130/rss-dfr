@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSS — Daily Foreman Report</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
+:root {
+  --blue:#1a3a6b; --blue-mid:#1e4a8c; --blue-light:#e8eef7; --blue-dark:#0f2347;
+  --red:#c8000a; --green:#1a7a3a; --yellow:#b87800;
+  --border:#c0cad8; --text:#1a1a1a; --label:#3a4a60; --bg:#dde3ec;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);}
+.header{background:var(--blue);display:flex;align-items:center;gap:20px;padding:14px 28px;}
+.logo-box{background:#fff;border-radius:4px;padding:6px 10px;}
+.logo-text{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--blue);letter-spacing:.06em;}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:.04em;text-transform:uppercase;}
+.header-sub{font-size:10px;color:#a0b8d8;margin-top:2px;letter-spacing:.08em;text-transform:uppercase;}
+.nav-bar{background:#122b52;display:flex;gap:2px;padding:0 28px;}
+.nav-bar a{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a0b8d8;text-decoration:none;padding:9px 16px;display:block;border-bottom:3px solid transparent;}
+.nav-bar a.active{color:#fff;border-bottom-color:var(--red);}
+.nav-bar a:hover{color:#fff;}
+.main{max-width:960px;margin:0 auto;padding:28px 20px 60px;}
+.form-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.form-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;}
+.dfr-num-badge{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;background:var(--blue);color:#fff;padding:6px 14px;border-radius:4px;letter-spacing:.05em;}
+.section{background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:18px;overflow:hidden;}
+.section-header{background:var(--blue);padding:10px 18px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#fff;letter-spacing:.08em;text-transform:uppercase;}
+.section-body{padding:18px 20px;}
+.field-grid{display:grid;gap:14px 18px;}
+.fg-2{grid-template-columns:1fr 1fr;}
+.fg-3{grid-template-columns:1fr 1fr 1fr;}
+.fg-4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.fg-6{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;}
+@media(max-width:640px){.fg-2,.fg-3,.fg-4,.fg-6{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;}
+.field input,.field select,.field textarea{font-family:'Barlow',sans-serif;font-size:13px;border:1.5px solid var(--border);border-radius:4px;padding:8px 10px;color:var(--text);background:#fff;width:100%;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--blue-mid);border-color:transparent;}
+.field textarea{resize:vertical;min-height:60px;}
+.day-row{display:flex;gap:8px;flex-wrap:wrap;}
+.day-btn{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;padding:7px 14px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;background:#fff;color:var(--label);transition:all .12s;}
+.day-btn.selected{background:var(--blue);color:#fff;border-color:var(--blue);}
+.time-ampm{display:flex;gap:8px;align-items:center;}
+.time-ampm input[type="time"]{flex:1;}
+.time-ampm select{width:80px;}
+/* EMPLOYEE TABLE */
+.emp-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;}
+.emp-table th{background:var(--blue-light);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.emp-table td{padding:6px 8px;border-bottom:1px solid #eef1f6;vertical-align:middle;}
+.emp-table input,.emp-table select{font-family:'Barlow',sans-serif;font-size:12px;border:1px solid var(--border);border-radius:3px;padding:5px 7px;width:100%;}
+.btn-add-row{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--blue-light);color:var(--blue);border:1px solid var(--border);border-radius:4px;padding:6px 14px;cursor:pointer;}
+.btn-add-row:hover{background:var(--blue);color:#fff;}
+.btn-del-row{background:none;border:none;cursor:pointer;color:#c0cad8;font-size:16px;padding:2px 6px;}
+.btn-del-row:hover{color:var(--red);}
+/* EQUIPMENT GRID */
+.equip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+.equip-item{border:1px solid var(--border);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.equip-name{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.04em;}
+.equip-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.equip-fields label{font-size:10px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:2px;}
+.equip-fields input{font-family:'Barlow',sans-serif;font-size:12px;border:1px solid var(--border);border-radius:3px;padding:5px 7px;width:100%;}
+/* YN TOGGLE */
+.yn-group{display:flex;gap:10px;align-items:center;}
+.yn-btn{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:7px 20px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;background:#fff;color:var(--label);}
+.yn-btn.yes.sel{background:#d1f0da;color:var(--green);border-color:var(--green);}
+.yn-btn.no.sel{background:#fde8e8;color:var(--red);border-color:var(--red);}
+/* CHECKBOX */
+.check-row{display:flex;align-items:center;gap:10px;padding:10px 0;}
+.check-row input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:var(--red);}
+.check-row label{font-size:13px;font-weight:600;color:var(--text);cursor:pointer;}
+/* SIGNATURE */
+.sig-wrap{border:1.5px solid var(--border);border-radius:4px;overflow:hidden;position:relative;}
+canvas{display:block;width:100%;height:130px;background:#fff;touch-action:none;cursor:crosshair;}
+.sig-clear{position:absolute;top:6px;right:8px;font-size:11px;font-weight:700;color:var(--label);cursor:pointer;background:#f0f2f5;border:1px solid var(--border);border-radius:3px;padding:3px 8px;}
+/* BOTTOM BUTTONS */
+.btn-row{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+.btn-draft{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:#fff;color:var(--blue);border:2px solid var(--blue);border-radius:5px;padding:12px 24px;cursor:pointer;flex:1;min-width:140px;}
+.btn-draft:hover{background:var(--blue-light);}
+.btn-submit{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--green);color:#fff;border:none;border-radius:5px;padding:12px 24px;cursor:pointer;flex:2;}
+.btn-submit:hover{background:#145e2c;}
+.btn-submit:disabled,.btn-draft:disabled{opacity:.5;cursor:not-allowed;}
+.toast{position:fixed;bottom:28px;right:28px;background:var(--blue);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;padding:12px 22px;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.22);opacity:0;transform:translateY(12px);transition:all .25s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.error{background:var(--red);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-box"><span class="logo-text">RSS</span></div>
+  <div>
+    <div class="header-title">Road Safety Systems</div>
+    <div class="header-sub">Daily Foreman Report</div>
+  </div>
+</div>
+<div class="nav-bar">
+  <a href="dfr.html" class="active">New DFR</a>
+  <a href="dfr-dashboard.html">Dashboard</a>
+</div>
+
+<div class="main">
+  <div class="form-header">
+    <div class="form-title">Daily Foreman Report</div>
+    <div class="dfr-num-badge" id="dfr-num-badge">DFR# — Auto-Assigned</div>
+  </div>
+
+  <!-- JOB INFO -->
+  <div class="section">
+    <div class="section-header">Job Information</div>
+    <div class="section-body">
+      <div class="field-grid fg-2" style="margin-bottom:14px;">
+        <div class="field">
+          <label>RSS Job # / Contract</label>
+          <select id="rss-job" onchange="onJobChange()">
+            <option value="">— Select Job —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vista #</label>
+          <input type="text" id="vista-num" placeholder="Auto-filled or enter manually">
+        </div>
+      </div>
+      <div class="field-grid fg-2" style="margin-bottom:14px;">
+        <div class="field">
+          <label>Customer</label>
+          <input type="text" id="customer" placeholder="e.g. NYSDOT">
+        </div>
+        <div class="field">
+          <label>Owner</label>
+          <input type="text" id="owner" placeholder="e.g. NYSDOT">
+        </div>
+      </div>
+      <div class="field-grid fg-3" style="margin-bottom:14px;">
+        <div class="field">
+          <label>Super / RSS PM</label>
+          <input type="text" id="super-pm" placeholder="e.g. Rob Hooten">
+        </div>
+        <div class="field">
+          <label>Foreman</label>
+          <input type="text" id="foreman" placeholder="Foreman name">
+        </div>
+        <div class="field">
+          <label>Project</label>
+          <input type="text" id="project" placeholder="Project description">
+        </div>
+      </div>
+      <div class="field-grid fg-3">
+        <div class="field" style="grid-column:1/3;">
+          <label>Address / Street</label>
+          <input type="text" id="address" placeholder="Work location address">
+        </div>
+        <div class="field">
+          <label>Town</label>
+          <input type="text" id="town">
+        </div>
+        <div class="field">
+          <label>County</label>
+          <input type="text" id="county">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATE / DAY / TIMES -->
+  <div class="section">
+    <div class="section-header">Date, Day & Times</div>
+    <div class="section-body">
+      <div class="field-grid fg-2" style="margin-bottom:16px;">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="dfr-date">
+        </div>
+        <div class="field">
+          <label>Day of Week</label>
+          <div class="day-row" id="day-row">
+            <button class="day-btn" onclick="selDay(this,'SU')">SU</button>
+            <button class="day-btn" onclick="selDay(this,'MO')">MO</button>
+            <button class="day-btn" onclick="selDay(this,'TU')">TU</button>
+            <button class="day-btn" onclick="selDay(this,'WE')">WE</button>
+            <button class="day-btn" onclick="selDay(this,'TH')">TH</button>
+            <button class="day-btn" onclick="selDay(this,'FR')">FR</button>
+            <button class="day-btn" onclick="selDay(this,'SA')">SA</button>
+          </div>
+        </div>
+      </div>
+      <div class="field-grid fg-4">
+        <div class="field">
+          <label>Left Yard</label>
+          <div class="time-ampm">
+            <input type="time" id="left-yard">
+            <select id="left-yard-ampm"><option>AM</option><option>PM</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Arrive Job</label>
+          <div class="time-ampm">
+            <input type="time" id="arrive-job">
+            <select id="arrive-job-ampm"><option>AM</option><option>PM</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Left Job</label>
+          <div class="time-ampm">
+            <input type="time" id="left-job">
+            <select id="left-job-ampm"><option>AM</option><option>PM</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Arrive Yard</label>
+          <div class="time-ampm">
+            <input type="time" id="arrive-yard">
+            <select id="arrive-yard-ampm"><option>AM</option><option>PM</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="field-grid fg-3" style="margin-top:14px;">
+        <div class="field">
+          <label>Drive Time</label>
+          <input type="text" id="drive-time" placeholder="e.g. 1:30">
+        </div>
+        <div class="field">
+          <label>Fuel Receipts</label>
+          <input type="text" id="fuel-receipts" placeholder="Receipt #s or amount">
+        </div>
+      </div>
+      <div class="field-grid fg-2" style="margin-top:14px;">
+        <div class="field">
+          <label>Weather — AM</label>
+          <select id="weather-am">
+            <option value="">— Select —</option>
+            <option>Clear</option><option>Partly Cloudy</option><option>Cloudy</option>
+            <option>Rain</option><option>Heavy Rain</option><option>Snow</option>
+            <option>Fog</option><option>Windy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Weather — PM</label>
+          <select id="weather-pm">
+            <option value="">— Select —</option>
+            <option>Clear</option><option>Partly Cloudy</option><option>Cloudy</option>
+            <option>Rain</option><option>Heavy Rain</option><option>Snow</option>
+            <option>Fog</option><option>Windy</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEES -->
+  <div class="section">
+    <div class="section-header">Employees</div>
+    <div class="section-body">
+      <table class="emp-table" id="emp-table">
+        <thead>
+          <tr>
+            <th style="width:30%;">Employee Name</th>
+            <th style="width:12%;">Union</th>
+            <th style="width:12%;">Local</th>
+            <th style="width:14%;">Reg Hrs</th>
+            <th style="width:14%;">OT Hrs</th>
+            <th style="width:12%;">Drive Hrs</th>
+            <th style="width:10%;">Total</th>
+            <th style="width:32px;"></th>
+          </tr>
+        </thead>
+        <tbody id="emp-tbody"></tbody>
+      </table>
+      <button class="btn-add-row" onclick="addEmpRow()">+ Add Employee</button>
+    </div>
+  </div>
+
+  <!-- WORK / PAY QUANTITIES -->
+  <div class="section">
+    <div class="section-header">Description of Work / Pay Quantities</div>
+    <div class="section-body">
+      <div class="check-row" style="margin-bottom:12px;">
+        <input type="checkbox" id="tm-used">
+        <label for="tm-used">T&M / Cost Plus work associated with this DFR</label>
+      </div>
+      <table class="emp-table" id="work-table">
+        <thead>
+          <tr>
+            <th style="width:22%;">Item #</th>
+            <th style="width:38%;">Description</th>
+            <th style="width:18%;">Qty Installed</th>
+            <th style="width:16%;">Unit</th>
+            <th style="width:32px;"></th>
+          </tr>
+        </thead>
+        <tbody id="work-tbody"></tbody>
+      </table>
+      <button class="btn-add-row" onclick="addWorkRow()">+ Add Item</button>
+    </div>
+  </div>
+
+  <!-- EQUIPMENT -->
+  <div class="section">
+    <div class="section-header">Equipment / Vehicles</div>
+    <div class="section-body">
+      <div class="equip-grid" id="equip-grid"></div>
+    </div>
+  </div>
+
+  <!-- SPECIAL INSTRUCTIONS -->
+  <div class="section">
+    <div class="section-header">Special Instructions / Comments</div>
+    <div class="section-body">
+      <textarea id="special-instructions" style="width:100%;min-height:80px;" placeholder="Enter any special instructions, comments, or notes..."></textarea>
+    </div>
+  </div>
+
+  <!-- INJURIES / ISSUES -->
+  <div class="section">
+    <div class="section-header">Incidents</div>
+    <div class="section-body">
+      <div style="display:flex;gap:40px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Injuries Reported</div>
+          <div class="yn-group">
+            <button class="yn-btn yes" id="inj-y" onclick="setYN('inj','Y')">Y</button>
+            <button class="yn-btn no sel" id="inj-n" onclick="setYN('inj','N')">N</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Equipment/Vehicle Issues</div>
+          <div class="yn-group">
+            <button class="yn-btn yes" id="eq-y" onclick="setYN('eq','Y')">Y</button>
+            <button class="yn-btn no sel" id="eq-n" onclick="setYN('eq','N')">N</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNATURE -->
+  <div class="section">
+    <div class="section-header">Foreman Signature</div>
+    <div class="section-body">
+      <div class="sig-wrap">
+        <canvas id="sig-canvas" height="130"></canvas>
+        <span class="sig-clear" onclick="clearSig()">Clear</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-draft" id="btn-draft" onclick="saveDraft()">Save Draft</button>
+    <button class="btn-submit" id="btn-submit" onclick="submitDFR()">Submit DFR →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAEbciPgcnYHEvR1FLfSab1ZtACcyKntJwd9b9hxMV7AmH1ziFUCvDVqTkc3SsdqKQ/exec';
+const EQUIPMENT_LIST = ['Flatbed','Tractor','Crew Cab','Maintenance','Gehl/Excavator','Pounder','Dump Truck / TMA'];
+
+let jobs = [];
+let items = [];
+let employees = [];
+let selectedDay = '';
+let injYN = 'N';
+let eqYN = 'N';
+let sigData = null;
+let currentDFRNum = null;
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('dfr-date').valueAsDate = new Date();
+  autoSelectDay();
+  buildEquipGrid();
+  initSignature();
+  await loadData();
+  addEmpRow(); addEmpRow(); addEmpRow();
+  addWorkRow(); addWorkRow(); addWorkRow();
+
+  // Check if loading a draft
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('dfr')) loadDraft(params.get('dfr'));
+});
+
+async function loadData() {
+  try {
+    const [jobRes, empRes] = await Promise.all([
+      fetch(`${SCRIPT_URL}?action=getJobs`),
+      fetch(`${SCRIPT_URL}?action=getEmployees`)
+    ]);
+    jobs = await jobRes.json();
+    employees = await empRes.json();
+    populateJobDropdown();
+  } catch(e) { showToast('Could not load job list — check connection', true); }
+}
+
+function populateJobDropdown() {
+  const sel = document.getElementById('rss-job');
+  sel.innerHTML = '<option value="">— Select Job —</option>';
+  jobs.filter(j => j['Status'] === 'Active').forEach(j => {
+    const opt = document.createElement('option');
+    opt.value = j['Job ID'];
+    opt.textContent = `${j['Contract#']} — ${j['Job Name']}`;
+    opt.dataset.vista = j['Vista#'] || '';
+    opt.dataset.customer = j['Customer'] || '';
+    opt.dataset.owner = j['Owner'] || '';
+    opt.dataset.super = j['Super/RSS PM'] || '';
+    sel.appendChild(opt);
+  });
+}
+
+async function onJobChange() {
+  const sel = document.getElementById('rss-job');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) { items = []; return; }
+  document.getElementById('vista-num').value = opt.dataset.vista;
+  document.getElementById('customer').value = opt.dataset.customer;
+  document.getElementById('owner').value = opt.dataset.owner;
+  document.getElementById('super-pm').value = opt.dataset.super;
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getItems&jobId=${opt.value}`);
+    items = await res.json();
+    refreshWorkItemDropdowns();
+  } catch(e) {}
+}
+
+// ── DAY SELECTOR ──────────────────────────────────────────────────────────────
+function autoSelectDay() {
+  const days = ['SU','MO','TU','WE','TH','FR','SA'];
+  const today = days[new Date().getDay()];
+  document.querySelectorAll('.day-btn').forEach(b => {
+    if (b.textContent === today) { b.classList.add('selected'); selectedDay = today; }
+  });
+}
+function selDay(btn, day) {
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedDay = day;
+}
+
+// ── EMPLOYEE TABLE ────────────────────────────────────────────────────────────
+let empRowCount = 0;
+function addEmpRow() {
+  const id = ++empRowCount;
+  const tbody = document.getElementById('emp-tbody');
+  const tr = document.createElement('tr');
+  const empOptions = employees.map(e => `<option value="${e['Name']}">${e['Name']} — ${e['Union'] || ''} ${e['Local'] || ''}</option>`).join('');
+  tr.innerHTML = `
+    <td>
+      <select id="emp-name-${id}" style="width:100%;" onchange="fillEmpDetails(${id})">
+        <option value="">— Select —</option>
+        ${empOptions}
+        <option value="__manual__">Enter manually…</option>
+      </select>
+      <input type="text" id="emp-name-manual-${id}" placeholder="Employee name" style="display:none;margin-top:4px;width:100%;">
+    </td>
+    <td><input type="text" id="emp-union-${id}" placeholder="Union"></td>
+    <td><input type="text" id="emp-local-${id}" placeholder="Local"></td>
+    <td><input type="number" id="emp-reg-${id}" placeholder="0" min="0" step="0.5" onchange="calcTotal(${id})"></td>
+    <td><input type="number" id="emp-ot-${id}" placeholder="0" min="0" step="0.5" onchange="calcTotal(${id})"></td>
+    <td><input type="number" id="emp-drive-${id}" placeholder="0" min="0" step="0.5" onchange="calcTotal(${id})"></td>
+    <td><input type="text" id="emp-total-${id}" readonly style="background:#f8f9fb;font-weight:600;"></td>
+    <td><button class="btn-del-row" onclick="this.closest('tr').remove()">×</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function fillEmpDetails(id) {
+  const sel = document.getElementById(`emp-name-${id}`);
+  const manualInput = document.getElementById(`emp-name-manual-${id}`);
+  if (sel.value === '__manual__') {
+    manualInput.style.display = 'block';
+    document.getElementById(`emp-union-${id}`).value = '';
+    document.getElementById(`emp-local-${id}`).value = '';
+    return;
+  }
+  manualInput.style.display = 'none';
+  const emp = employees.find(e => e['Name'] === sel.value);
+  if (emp) {
+    document.getElementById(`emp-union-${id}`).value = emp['Union'] || '';
+    document.getElementById(`emp-local-${id}`).value = emp['Local'] || '';
+  }
+}
+
+function calcTotal(id) {
+  const reg = parseFloat(document.getElementById(`emp-reg-${id}`).value)||0;
+  const ot  = parseFloat(document.getElementById(`emp-ot-${id}`).value)||0;
+  const drv = parseFloat(document.getElementById(`emp-drive-${id}`).value)||0;
+  document.getElementById(`emp-total-${id}`).value = (reg+ot+drv).toFixed(1);
+}
+
+// ── WORK ITEMS TABLE ──────────────────────────────────────────────────────────
+let workRowCount = 0;
+function addWorkRow() {
+  const id = ++workRowCount;
+  const tbody = document.getElementById('work-tbody');
+  const tr = document.createElement('tr');
+  tr.id = `work-row-${id}`;
+  tr.innerHTML = buildWorkRowHTML(id);
+  tbody.appendChild(tr);
+}
+
+function buildWorkRowHTML(id) {
+  const itemOptions = items.map(i => `<option value="${i['Item#']}" data-desc="${i['Description']}" data-unit="${i['Unit']}">${i['Item#']} — ${i['Description']}</option>`).join('');
+  return `
+    <td>
+      <select id="work-item-${id}" onchange="fillItemDetails(${id})" style="width:100%;">
+        <option value="">— Select Item —</option>
+        ${itemOptions}
+        <option value="__manual__">Enter manually…</option>
+      </select>
+      <input type="text" id="work-item-manual-${id}" placeholder="Item #" style="display:none;margin-top:4px;width:100%;">
+    </td>
+    <td><input type="text" id="work-desc-${id}" placeholder="Description"></td>
+    <td><input type="number" id="work-qty-${id}" placeholder="0" min="0" step="0.01"></td>
+    <td><input type="text" id="work-unit-${id}" placeholder="LF/EA/CY…"></td>
+    <td><button class="btn-del-row" onclick="this.closest('tr').remove()">×</button></td>
+  `;
+}
+
+function fillItemDetails(id) {
+  const sel = document.getElementById(`work-item-${id}`);
+  const manualInput = document.getElementById(`work-item-manual-${id}`);
+  if (sel.value === '__manual__') { manualInput.style.display='block'; return; }
+  manualInput.style.display='none';
+  const opt = sel.options[sel.selectedIndex];
+  if (opt.value) {
+    document.getElementById(`work-desc-${id}`).value = opt.dataset.desc || '';
+    document.getElementById(`work-unit-${id}`).value = opt.dataset.unit || '';
+  }
+}
+
+function refreshWorkItemDropdowns() {
+  // Rebuild all existing work row dropdowns with updated items
+  const rows = document.querySelectorAll('[id^="work-item-"]');
+  rows.forEach(sel => {
+    if (!sel.tagName === 'SELECT') return;
+    const id = sel.id.replace('work-item-','');
+    const currentVal = sel.value;
+    const row = document.getElementById(`work-row-${id}`);
+    if (row) row.innerHTML = buildWorkRowHTML(id);
+    const newSel = document.getElementById(`work-item-${id}`);
+    if (newSel && currentVal) newSel.value = currentVal;
+  });
+}
+
+// ── EQUIPMENT GRID ────────────────────────────────────────────────────────────
+function buildEquipGrid() {
+  const grid = document.getElementById('equip-grid');
+  EQUIPMENT_LIST.forEach((name, i) => {
+    grid.innerHTML += `
+      <div class="equip-item">
+        <div class="equip-name">${name}</div>
+        <div class="equip-fields">
+          <div>
+            <label>RSS # (Circle)</label>
+            <input type="text" id="equip-rss-${i}" placeholder="RSS #">
+          </div>
+          <div>
+            <label>Rntl</label>
+            <input type="checkbox" id="equip-rntl-${i}" style="width:auto;margin-top:6px;">
+          </div>
+          <div style="grid-column:1/3;">
+            <label>Hours</label>
+            <input type="number" id="equip-hrs-${i}" placeholder="0" min="0" step="0.5">
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// ── Y/N TOGGLES ───────────────────────────────────────────────────────────────
+function setYN(field, val) {
+  if (field === 'inj') {
+    injYN = val;
+    document.getElementById('inj-y').className = `yn-btn yes${val==='Y'?' sel':''}`;
+    document.getElementById('inj-n').className = `yn-btn no${val==='N'?' sel':''}`;
+  } else {
+    eqYN = val;
+    document.getElementById('eq-y').className = `yn-btn yes${val==='Y'?' sel':''}`;
+    document.getElementById('eq-n').className = `yn-btn no${val==='N'?' sel':''}`;
+  }
+}
+
+// ── SIGNATURE ─────────────────────────────────────────────────────────────────
+function initSignature() {
+  const canvas = document.getElementById('sig-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * dpr;
+  canvas.height = 130 * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.strokeStyle = '#1a3a6b'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  let drawing = false;
+  const pos = e => {
+    const r = canvas.getBoundingClientRect();
+    const sx = (canvas.width/dpr)/r.width, sy = (canvas.height/dpr)/r.height;
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return {x:(cx-r.left)*sx, y:(cy-r.top)*sy};
+  };
+  canvas.addEventListener('mousedown', e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+  canvas.addEventListener('mousemove', e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+  canvas.addEventListener('mouseup', ()=>{drawing=false;sigData=canvas.toDataURL();});
+  canvas.addEventListener('mouseleave', ()=>{drawing=false;});
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
+  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});
+  canvas.addEventListener('touchend',()=>{drawing=false;sigData=canvas.toDataURL();});
+}
+function clearSig(){const c=document.getElementById('sig-canvas');c.getContext('2d').clearRect(0,0,c.width,c.height);sigData=null;}
+
+// ── COLLECT FORM DATA ─────────────────────────────────────────────────────────
+function collectForm() {
+  // Employees
+  const empRows = document.querySelectorAll('#emp-tbody tr');
+  const empData = [];
+  empRows.forEach(tr => {
+    const id = tr.querySelector('[id^="emp-name-"]')?.id.replace('emp-name-','');
+    if (!id) return;
+    const sel = document.getElementById(`emp-name-${id}`);
+    const name = sel.value === '__manual__'
+      ? document.getElementById(`emp-name-manual-${id}`).value
+      : sel.value;
+    if (!name) return;
+    empData.push({
+      name,
+      union: document.getElementById(`emp-union-${id}`).value,
+      local: document.getElementById(`emp-local-${id}`).value,
+      regHrs: document.getElementById(`emp-reg-${id}`).value || '0',
+      otHrs: document.getElementById(`emp-ot-${id}`).value || '0',
+      driveHrs: document.getElementById(`emp-drive-${id}`).value || '0',
+      totalHrs: document.getElementById(`emp-total-${id}`).value || '0',
+    });
+  });
+
+  // Work items
+  const workRows = document.querySelectorAll('#work-tbody tr');
+  const workData = [];
+  workRows.forEach(tr => {
+    const id = tr.querySelector('[id^="work-item-"]')?.id.replace('work-item-','');
+    if (!id) return;
+    const sel = document.getElementById(`work-item-${id}`);
+    const itemNum = sel.value === '__manual__'
+      ? document.getElementById(`work-item-manual-${id}`).value
+      : sel.value;
+    const qty = document.getElementById(`work-qty-${id}`).value;
+    if (!itemNum && !qty) return;
+    workData.push({
+      itemNum,
+      description: document.getElementById(`work-desc-${id}`).value,
+      qty,
+      unit: document.getElementById(`work-unit-${id}`).value,
+    });
+  });
+
+  // Equipment
+  const equipData = EQUIPMENT_LIST.map((name, i) => ({
+    name,
+    rssNum: document.getElementById(`equip-rss-${i}`).value,
+    rental: document.getElementById(`equip-rntl-${i}`).checked,
+    hours: document.getElementById(`equip-hrs-${i}`).value,
+  })).filter(e => e.rssNum || e.hours);
+
+  const sel = document.getElementById('rss-job');
+  const opt = sel.options[sel.selectedIndex];
+
+  return {
+    dfrNum: currentDFRNum,
+    date: document.getElementById('dfr-date').value,
+    day: selectedDay,
+    rssJobNum: opt.value ? opt.textContent.split('—')[0].trim() : '',
+    jobName: opt.value ? opt.textContent.split('—').slice(1).join('—').trim() : '',
+    vistaNum: document.getElementById('vista-num').value,
+    customer: document.getElementById('customer').value,
+    owner: document.getElementById('owner').value,
+    superPM: document.getElementById('super-pm').value,
+    foreman: document.getElementById('foreman').value,
+    project: document.getElementById('project').value,
+    address: document.getElementById('address').value,
+    town: document.getElementById('town').value,
+    county: document.getElementById('county').value,
+    leftYard: document.getElementById('left-yard').value + ' ' + document.getElementById('left-yard-ampm').value,
+    arriveJob: document.getElementById('arrive-job').value + ' ' + document.getElementById('arrive-job-ampm').value,
+    leftJob: document.getElementById('left-job').value + ' ' + document.getElementById('left-job-ampm').value,
+    arriveYard: document.getElementById('arrive-yard').value + ' ' + document.getElementById('arrive-yard-ampm').value,
+    driveTime: document.getElementById('drive-time').value,
+    fuelReceipts: document.getElementById('fuel-receipts').value,
+    weatherAM: document.getElementById('weather-am').value,
+    weatherPM: document.getElementById('weather-pm').value,
+    employees: empData,
+    workItems: workData,
+    equipment: equipData,
+    specialInstructions: document.getElementById('special-instructions').value,
+    injuriesReported: injYN,
+    equipmentIssues: eqYN,
+    tmUsed: document.getElementById('tm-used').checked,
+    signature: sigData,
+  };
+}
+
+async function saveDraft() {
+  const btn = document.getElementById('btn-draft');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'saveDraft', ...collectForm()})});
+    const data = await res.json();
+    if (data.success) {
+      currentDFRNum = data.dfrNum;
+      document.getElementById('dfr-num-badge').textContent = data.dfrNum + ' — Draft';
+      showToast('Draft saved: ' + data.dfrNum);
+    } else showToast('Save failed', true);
+  } catch(e) { showToast('Network error', true); }
+  btn.disabled = false; btn.textContent = 'Save Draft';
+}
+
+async function submitDFR() {
+  const btn = document.getElementById('btn-submit');
+  if (!document.getElementById('foreman').value) { showToast('Please enter a foreman name', true); return; }
+  if (!sigData) { showToast('Please sign the DFR before submitting', true); return; }
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  try {
+    const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'submitDFR', ...collectForm()})});
+    const data = await res.json();
+    if (data.success) {
+      currentDFRNum = data.dfrNum;
+      document.getElementById('dfr-num-badge').textContent = data.dfrNum + ' — Submitted';
+      btn.textContent = '✓ Submitted';
+      showToast(data.dfrNum + ' submitted successfully!');
+    } else showToast('Submit failed', true);
+  } catch(e) { showToast('Network error', true); }
+  btn.disabled = false;
+}
+
+async function loadDraft(dfrNum) {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getDFR&dfrNum=${dfrNum}`);
+    const d = await res.json();
+    if (!d) return;
+    currentDFRNum = d['DFR#'];
+    document.getElementById('dfr-num-badge').textContent = d['DFR#'] + ' — Draft';
+    document.getElementById('dfr-date').value = d['Date'];
+    document.getElementById('vista-num').value = d['Vista#'];
+    document.getElementById('customer').value = d['Customer'];
+    document.getElementById('owner').value = d['Owner'];
+    document.getElementById('super-pm').value = d['Super/RSS PM'];
+    document.getElementById('foreman').value = d['Foreman'];
+    document.getElementById('project').value = d['Project'];
+    document.getElementById('address').value = d['Address'];
+    document.getElementById('town').value = d['Town'];
+    document.getElementById('county').value = d['County'];
+    document.getElementById('special-instructions').value = d['Special Instructions'];
+    // Day
+    if (d['Day']) {
+      document.querySelectorAll('.day-btn').forEach(b => {
+        if (b.textContent === d['Day']) { b.classList.add('selected'); selectedDay = d['Day']; }
+      });
+    }
+  } catch(e) {}
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError?' error':'');
+  setTimeout(()=>t.className='toast', 3500);
+}
+</script>
+</body>
+</html>
