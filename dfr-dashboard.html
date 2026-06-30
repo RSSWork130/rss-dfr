@@ -350,6 +350,23 @@ td.dfr-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1
           </table>
         </div>
       </div>
+
+      <!-- EQUIPMENT -->
+      <div class="admin-section" id="admin-equipment">
+        <div class="add-form">
+          <div class="section-title">Add Equipment to Master List</div>
+          <div class="add-form-grid">
+            <div><label>Equipment Name</label><input type="text" id="new-equip-name" placeholder="e.g. Watson 2100 Drill"></div>
+          </div>
+          <button class="btn-sm btn-green" onclick="addEquipment()">+ Add Equipment</button>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Equipment Name</th><th>Active</th><th>Actions</th></tr></thead>
+            <tbody id="equip-admin-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -398,6 +415,7 @@ async function loadAll() {
     renderItems();
     renderEmployeesAdmin();
     populateAdminJobDropdowns();
+    await loadEquipment();
     document.getElementById('dfr-loading').style.display = 'none';
   } catch(e) {
     document.getElementById('dfr-loading').textContent = 'Error loading data. Check Apps Script URL.';
@@ -862,14 +880,65 @@ async function confirmDelete() {
   const btn = document.getElementById('del-confirm-btn');
   btn.disabled = true; btn.textContent = 'Deleting…';
   const {id, type} = pendingDelete;
-  const actionMap = {DFR:'deleteDFR', job:'deleteJob', item:'deleteItem', employee:'deleteEmployee'};
-  const keyMap    = {DFR:'dfrNum',    job:'jobId',     item:'itemId',     employee:'empId'};
+  const actionMap = {DFR:'deleteDFR', job:'deleteJob', item:'deleteItem', employee:'deleteEmployee', equipment:'deleteEquipment'};
+  const keyMap    = {DFR:'dfrNum',    job:'jobId',     item:'itemId',     employee:'empId',           equipment:'equipId'};
   try {
     const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:actionMap[type],[keyMap[type]]:id})});
     const data = await res.json();
     if (data.success) { closeDeleteModal(); showToast('Deleted'); await loadAll(); }
     else { document.getElementById('del-error').textContent = data.error||'Delete failed'; btn.disabled=false; btn.textContent='Delete'; }
   } catch(e) { document.getElementById('del-error').textContent='Network error'; btn.disabled=false; btn.textContent='Delete'; }
+}
+
+// ── ADMIN: EQUIPMENT ─────────────────────────────────────────────────────────
+let allEquipment = [];
+
+async function loadEquipment() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getEquipment`);
+    allEquipment = await res.json();
+    renderEquipmentAdmin();
+  } catch(e) {}
+}
+
+function renderEquipmentAdmin() {
+  const tbody = document.getElementById('equip-admin-tbody');
+  tbody.innerHTML = '';
+  allEquipment.forEach(eq => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${eq['Name']||''}" id="eqn-${eq['Equipment ID']}" style="width:240px;"></td>
+      <td><select id="eqa-${eq['Equipment ID']}" style="width:80px;"><option${eq['Active']==='Yes'?' selected':''}>Yes</option><option${eq['Active']==='No'?' selected':''}>No</option></select></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn-sm btn-green" onclick="saveEquipment('${eq['Equipment ID']}')">Save</button>
+        <button class="btn-sm btn-red" onclick="openDeleteModal('${eq['Equipment ID']}','equipment','${eq['Name'].replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function addEquipment() {
+  const name = document.getElementById('new-equip-name').value.trim();
+  if (!name) { showToast('Equipment name required', true); return; }
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'addEquipment', name})});
+  const data = await res.json();
+  if (data.success) {
+    showToast('Equipment added');
+    document.getElementById('new-equip-name').value = '';
+    await loadEquipment();
+  } else showToast('Error adding equipment', true);
+}
+
+async function saveEquipment(equipId) {
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+    action:'updateEquipment', equipId,
+    name:   document.getElementById(`eqn-${equipId}`).value,
+    active: document.getElementById(`eqa-${equipId}`).value,
+  })});
+  const data = await res.json();
+  if (data.success) { showToast('Equipment saved'); await loadEquipment(); }
+  else showToast('Error saving equipment', true);
 }
 
 function showToast(msg, isError=false) {
