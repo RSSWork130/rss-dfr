@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSS — DFR Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
+:root{
+  --blue:#1a3a6b;--blue-mid:#1e4a8c;--blue-light:#e8eef7;--blue-dark:#0f2347;
+  --red:#c8000a;--green:#1a7a3a;--yellow:#b87800;
+  --border:#c0cad8;--text:#1a1a1a;--label:#3a4a60;--bg:#dde3ec;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);}
+.header{background:var(--blue);display:flex;align-items:center;gap:20px;padding:14px 28px;}
+.logo-box{background:#fff;border-radius:4px;padding:6px 10px;}
+.logo-text{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--blue);letter-spacing:.06em;}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:.04em;text-transform:uppercase;}
+.header-sub{font-size:10px;color:#a0b8d8;margin-top:2px;letter-spacing:.08em;text-transform:uppercase;}
+.nav-bar{background:#122b52;display:flex;gap:2px;padding:0 28px;}
+.nav-bar a{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a0b8d8;text-decoration:none;padding:9px 16px;display:block;border-bottom:3px solid transparent;}
+.nav-bar a.active{color:#fff;border-bottom-color:var(--red);}
+.nav-bar a:hover{color:#fff;}
+.main{max-width:1400px;margin:0 auto;padding:28px 24px 60px;}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:20px;}
+
+/* TAB BAR */
+.tab-bar{display:flex;gap:2px;margin-bottom:24px;border-bottom:2px solid var(--border);}
+.tab{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px 20px;cursor:pointer;color:var(--label);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* STATS */
+.stats-bar{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:14px 22px;flex:1;min-width:120px;text-align:center;}
+.stat-num{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;color:var(--blue);}
+.stat-label{font-size:11px;color:var(--label);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+
+/* FILTERS */
+.filters{background:#fff;border:1px solid var(--border);border-radius:6px;padding:16px 20px;display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end;}
+.filter-group{display:flex;flex-direction:column;gap:5px;}
+.filter-group label{font-size:11px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;}
+.filter-group select,.filter-group input{font-family:'Barlow',sans-serif;font-size:13px;border:1px solid var(--border);border-radius:4px;padding:7px 10px;color:var(--text);background:#fff;}
+.btn-sm{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:8px 16px;cursor:pointer;border:1px solid var(--border);}
+.btn-blue{background:var(--blue-light);color:var(--blue);}
+.btn-blue:hover{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-red{background:#fff0f0;color:var(--red);border-color:#f5c6c6;}
+.btn-red:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.btn-green{background:#e8f4ea;color:var(--green);border-color:#a8ddb5;}
+.btn-green:hover{background:var(--green);color:#fff;border-color:var(--green);}
+.btn-primary{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--blue);color:#fff;border:none;border-radius:5px;padding:10px 24px;cursor:pointer;}
+.btn-primary:hover{background:var(--blue-mid);}
+.btn-export{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--green);color:#fff;border:none;border-radius:5px;padding:10px 24px;cursor:pointer;}
+.btn-export:hover{background:#145e2c;}
+.btn-export:disabled{opacity:.5;cursor:not-allowed;}
+
+/* TABLE */
+.table-wrap{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead{background:var(--blue);}
+thead th{color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:10px 12px;text-align:left;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #e8eef7;transition:background .12s;}
+tbody tr:hover{background:var(--blue-light);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:9px 12px;vertical-align:middle;}
+td.dfr-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--blue);}
+.badge{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:3px;}
+.badge-Submitted{background:#d1f0da;color:var(--green);}
+.badge-Draft{background:#fff3cd;color:var(--yellow);}
+.empty-state{text-align:center;padding:60px 20px;color:#6a7a90;}
+.loading{text-align:center;padding:40px;color:#6a7a90;font-size:14px;}
+
+/* EXPORT PREVIEW */
+.export-preview-wrap{overflow-x:auto;}
+.export-preview-wrap table{min-width:1200px;}
+.preview-count{font-size:13px;color:var(--label);margin-bottom:12px;font-weight:600;}
+
+/* ADMIN */
+.admin-lock{background:#fff;border:1px solid var(--border);border-radius:6px;padding:32px;text-align:center;max-width:400px;margin:0 auto;}
+.admin-lock h3{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:16px;}
+.admin-lock input{width:100%;font-family:'Barlow',sans-serif;font-size:15px;border:1.5px solid var(--border);border-radius:4px;padding:10px 12px;margin-bottom:12px;}
+.admin-lock input:focus{outline:2px solid var(--blue-mid);border-color:transparent;}
+.admin-error{color:var(--red);font-size:12px;min-height:18px;margin-bottom:8px;}
+.admin-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.admin-tab{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:8px 16px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;background:#fff;color:var(--label);}
+.admin-tab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.admin-section{display:none;}
+.admin-section.active{display:block;}
+.admin-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px;}
+.admin-table th{background:var(--blue-light);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.admin-table td{padding:7px 10px;border-bottom:1px solid #eef1f6;vertical-align:middle;}
+.admin-table input,.admin-table select{font-family:'Barlow',sans-serif;font-size:12px;border:1px solid var(--border);border-radius:3px;padding:5px 7px;width:100%;}
+.add-form{background:#f8f9fb;border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:14px;}
+.add-form-grid{display:grid;gap:10px 14px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:12px;}
+.add-form-grid input,.add-form-grid select{font-family:'Barlow',sans-serif;font-size:13px;border:1.5px solid var(--border);border-radius:4px;padding:8px 10px;width:100%;}
+.add-form label{font-size:10px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.active{display:flex;}
+.modal{background:#fff;border-radius:8px;padding:32px 36px;max-width:440px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.22);}
+.modal h3{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px;}
+.modal .info{font-size:13px;color:var(--label);margin-bottom:18px;padding:10px 14px;background:var(--blue-light);border-radius:4px;border-left:3px solid var(--blue);}
+.modal input[type="password"]{width:100%;font-family:'Barlow',sans-serif;font-size:15px;border:1.5px solid var(--border);border-radius:4px;padding:10px 12px;margin-bottom:8px;}
+.modal .error{font-size:12px;color:var(--red);min-height:16px;margin-bottom:12px;}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end;}
+.btn-cancel{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:#f0f2f5;color:var(--label);border:1px solid var(--border);border-radius:4px;padding:9px 20px;cursor:pointer;}
+.btn-confirm{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--red);color:#fff;border:none;border-radius:4px;padding:9px 20px;cursor:pointer;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--blue);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.05em;padding:12px 22px;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.22);opacity:0;transform:translateY(12px);transition:all .25s;pointer-events:none;z-index:2000;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.error{background:var(--red);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-box"><span class="logo-text">RSS</span></div>
+  <div>
+    <div class="header-title">Road Safety Systems</div>
+    <div class="header-sub">DFR Management</div>
+  </div>
+</div>
+<div class="nav-bar">
+  <a href="dfr.html">New DFR</a>
+  <a href="dfr-dashboard.html" class="active">Dashboard</a>
+</div>
+
+<div class="main">
+  <div class="page-title">DFR Dashboard</div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('dfrs')">DFR Records</button>
+    <button class="tab" onclick="switchTab('export')">Labor Export</button>
+    <button class="tab" onclick="switchTab('admin')">Admin</button>
+  </div>
+
+  <!-- DFR RECORDS TAB -->
+  <div class="tab-panel active" id="tab-dfrs">
+    <div class="stats-bar">
+      <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total DFRs</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-submitted" style="color:var(--green);">—</div><div class="stat-label">Submitted</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-draft" style="color:var(--yellow);">—</div><div class="stat-label">Drafts</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-tm" style="color:var(--red);">—</div><div class="stat-label">T&M / Cost Plus</div></div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Status</label>
+        <select id="f-status" onchange="applyFilters()">
+          <option value="">All</option>
+          <option>Submitted</option>
+          <option>Draft</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Job / Contract</label>
+        <select id="f-job" onchange="applyFilters()"><option value="">All Jobs</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Foreman</label>
+        <input type="text" id="f-foreman" placeholder="Name…" oninput="applyFilters()" style="width:160px;">
+      </div>
+      <div class="filter-group">
+        <label>Date From</label>
+        <input type="date" id="f-from" onchange="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <label>Date To</label>
+        <input type="date" id="f-to" onchange="applyFilters()">
+      </div>
+      <button class="btn-sm btn-blue" onclick="resetFilters()">Reset</button>
+    </div>
+    <div class="table-wrap">
+      <div id="dfr-loading" class="loading">Loading DFRs…</div>
+      <table id="dfr-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>DFR #</th><th>Date</th><th>Day</th><th>Job / Contract</th><th>Foreman</th>
+            <th>Town</th><th>Weather</th><th>Crew</th><th>T&M</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="dfr-tbody"></tbody>
+      </table>
+      <div id="dfr-empty" class="empty-state" style="display:none;">
+        <div style="font-size:36px;margin-bottom:12px;">📋</div>
+        <p>No DFRs match your filters.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LABOR EXPORT TAB -->
+  <div class="tab-panel" id="tab-export">
+    <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:20px 24px;margin-bottom:20px;">
+      <div class="section-title">Export Filters</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="filter-group">
+          <label>Quick Range</label>
+          <select id="ex-range" onchange="applyQuickRange()">
+            <option value="">Custom</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="lastweek">Last Week</option>
+            <option value="month">This Month</option>
+            <option value="lastmonth">Last Month</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Date From</label>
+          <input type="date" id="ex-from">
+        </div>
+        <div class="filter-group">
+          <label>Date To</label>
+          <input type="date" id="ex-to">
+        </div>
+        <div class="filter-group">
+          <label>Job / Contract</label>
+          <select id="ex-job"><option value="">All Jobs</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Foreman</label>
+          <input type="text" id="ex-foreman" placeholder="All foremen" style="width:160px;">
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="ex-status">
+            <option value="">All</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Draft">Draft</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="buildExportPreview()">Preview</button>
+        <button class="btn-export" id="btn-export" onclick="downloadCSV()" disabled>⬇ Download CSV</button>
+      </div>
+    </div>
+
+    <div id="export-preview-container" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="preview-count" id="export-count"></div>
+      </div>
+      <div class="table-wrap export-preview-wrap">
+        <table id="export-table">
+          <thead>
+            <tr>
+              <th>DFR#</th><th>Date</th><th>Day</th><th>RSS Job#</th><th>Job Name</th>
+              <th>Vista#</th><th>Customer</th><th>Owner</th><th>Super/PM</th><th>Foreman</th>
+              <th>Project</th><th>Address</th><th>Town</th><th>County</th>
+              <th>Left Yard</th><th>Arrive Job</th><th>Left Job</th><th>Arrive Yard</th>
+              <th>Drive Time</th><th>Fuel Receipts</th><th>Weather AM</th><th>Weather PM</th>
+              <th>T&M</th><th>Injuries</th><th>Equip Issues</th>
+              <th>Employee Name</th><th>Union</th><th>Local</th>
+              <th>Reg Hrs</th><th>OT Hrs</th><th>Drive Hrs</th><th>Total Hrs</th>
+              <th>Special Instructions</th>
+            </tr>
+          </thead>
+          <tbody id="export-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="export-empty" class="empty-state" style="display:none;">
+      <div style="font-size:36px;margin-bottom:12px;">📊</div>
+      <p>No records match your filters. Try adjusting the date range or job.</p>
+    </div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div class="tab-panel" id="tab-admin">
+    <div id="admin-lock-panel">
+      <div class="admin-lock">
+        <h3>Admin Access</h3>
+        <p style="font-size:13px;color:var(--label);margin-bottom:18px;">Enter the admin password to manage jobs, items, and employees.</p>
+        <input type="password" id="admin-pwd" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdminPwd()">
+        <div class="admin-error" id="admin-error"></div>
+        <button class="btn-primary" onclick="checkAdminPwd()" style="width:100%;">Unlock Admin</button>
+      </div>
+    </div>
+    <div id="admin-panel" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="admin-tabs">
+          <button class="admin-tab active" onclick="switchAdminTab('jobs')">Jobs / Contracts</button>
+          <button class="admin-tab" onclick="switchAdminTab('items')">Pay Items</button>
+          <button class="admin-tab" onclick="switchAdminTab('employees')">Employees</button>
+        </div>
+        <button class="btn-sm btn-red" onclick="lockAdmin()">Lock</button>
+      </div>
+
+      <!-- JOBS -->
+      <div class="admin-section active" id="admin-jobs">
+        <div class="add-form">
+          <div class="section-title">Add New Job / Contract</div>
+          <div class="add-form-grid">
+            <div><label>Contract #</label><input type="text" id="new-job-contract" placeholder="e.g. D265342"></div>
+            <div><label>Job Name</label><input type="text" id="new-job-name" placeholder="Short description"></div>
+            <div><label>Vista #</label><input type="text" id="new-job-vista"></div>
+            <div><label>Customer</label><input type="text" id="new-job-customer"></div>
+            <div><label>Owner</label><input type="text" id="new-job-owner"></div>
+            <div><label>Super / RSS PM</label><input type="text" id="new-job-super"></div>
+          </div>
+          <button class="btn-sm btn-green" onclick="addJob()">+ Add Job</button>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Contract #</th><th>Job Name</th><th>Vista #</th><th>Customer</th><th>Super/PM</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="jobs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ITEMS -->
+      <div class="admin-section" id="admin-items">
+        <div class="add-form">
+          <div class="section-title">Add Pay Item</div>
+          <div class="add-form-grid">
+            <div><label>Job</label><select id="new-item-job" style="font-family:'Barlow',sans-serif;font-size:13px;border:1.5px solid var(--border);border-radius:4px;padding:8px 10px;"></select></div>
+            <div><label>Item #</label><input type="text" id="new-item-num" placeholder="e.g. 644.20"></div>
+            <div><label>Description</label><input type="text" id="new-item-desc"></div>
+            <div><label>Unit</label><input type="text" id="new-item-unit" placeholder="LF/EA/CY"></div>
+          </div>
+          <button class="btn-sm btn-green" onclick="addItem()">+ Add Item</button>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.05em;">Filter by Job: </label>
+          <select id="item-filter-job" onchange="renderItems()" style="font-family:'Barlow',sans-serif;font-size:13px;border:1px solid var(--border);border-radius:4px;padding:7px 10px;margin-left:8px;"></select>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Item #</th><th>Description</th><th>Unit</th><th>Job</th><th>Actions</th></tr></thead>
+            <tbody id="items-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EMPLOYEES -->
+      <div class="admin-section" id="admin-employees">
+        <div class="add-form">
+          <div class="section-title">Add Employee</div>
+          <div class="add-form-grid">
+            <div><label>Name</label><input type="text" id="new-emp-name" placeholder="Full name"></div>
+            <div><label>Union</label><input type="text" id="new-emp-union"></div>
+            <div><label>Local</label><input type="text" id="new-emp-local"></div>
+          </div>
+          <button class="btn-sm btn-green" onclick="addEmployee()">+ Add Employee</button>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Union</th><th>Local</th><th>Active</th><th>Actions</th></tr></thead>
+            <tbody id="emp-admin-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3>Confirm Delete</h3>
+    <div class="info" id="del-modal-info"></div>
+    <input type="password" id="del-pwd" placeholder="Enter password to confirm" onkeydown="if(event.key==='Enter')confirmDelete()">
+    <div class="error" id="del-error"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" id="del-confirm-btn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAEbciPgcnYHEvR1FLfSab1ZtACcyKntJwd9b9hxMV7AmH1ziFUCvDVqTkc3SsdqKQ/exec';
+const ADMIN_PASSWORD = '110982';
+
+let allDFRs = [], allJobs = [], allItems = [], allEmployees = [];
+let exportRows = []; // expanded rows for CSV
+let pendingDelete = null;
+
+window.addEventListener('DOMContentLoaded', loadAll);
+
+async function loadAll() {
+  try {
+    const [dfrRes, jobRes, itemRes, empRes] = await Promise.all([
+      fetch(`${SCRIPT_URL}?action=getDFRs`),
+      fetch(`${SCRIPT_URL}?action=getJobs`),
+      fetch(`${SCRIPT_URL}?action=getItems`),
+      fetch(`${SCRIPT_URL}?action=getEmployees`),
+    ]);
+    allDFRs      = await dfrRes.json();
+    allJobs      = await jobRes.json();
+    allItems     = await itemRes.json();
+    allEmployees = await empRes.json();
+    renderDFRs(allDFRs);
+    populateFilterDropdowns();
+    renderJobsAdmin();
+    renderItems();
+    renderEmployeesAdmin();
+    populateAdminJobDropdowns();
+    document.getElementById('dfr-loading').style.display = 'none';
+  } catch(e) {
+    document.getElementById('dfr-loading').textContent = 'Error loading data. Check Apps Script URL.';
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  const tabs = ['dfrs','export','admin'];
+  tabs.forEach(t => {
+    document.querySelector(`.tab-bar .tab:nth-child(${tabs.indexOf(t)+1})`).classList.toggle('active', t===name);
+    document.getElementById(`tab-${t}`).classList.toggle('active', t===name);
+  });
+}
+
+// ── DFR TABLE ─────────────────────────────────────────────────────────────────
+function renderDFRs(dfrs) {
+  const tbody = document.getElementById('dfr-tbody');
+  tbody.innerHTML = '';
+  document.getElementById('dfr-table').style.display = dfrs.length ? 'table' : 'none';
+  document.getElementById('dfr-empty').style.display = dfrs.length ? 'none' : 'block';
+
+  document.getElementById('stat-total').textContent = dfrs.length;
+  document.getElementById('stat-submitted').textContent = dfrs.filter(d=>d['Status']==='Submitted').length;
+  document.getElementById('stat-draft').textContent = dfrs.filter(d=>d['Status']==='Draft').length;
+  document.getElementById('stat-tm').textContent = dfrs.filter(d=>d['T&M Used']==='Yes').length;
+
+  dfrs.forEach(d => {
+    let crew = 0;
+    try { crew = JSON.parse(d['Employees JSON']||'[]').length; } catch(e){}
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="dfr-num">${d['DFR#']}</td>
+      <td>${d['Date']||''}</td>
+      <td>${d['Day']||''}</td>
+      <td style="font-size:12px;">${d['RSS Job#']||''}</td>
+      <td>${d['Foreman']||''}</td>
+      <td>${d['Town']||''}</td>
+      <td>${d['Weather AM']||''}</td>
+      <td style="text-align:center;">${crew}</td>
+      <td style="text-align:center;">${d['T&M Used']==='Yes'?'<span style="color:var(--red);font-weight:700;">YES</span>':'—'}</td>
+      <td><span class="badge badge-${d['Status']}">${d['Status']}</span></td>
+      <td style="white-space:nowrap;display:flex;gap:6px;">
+        ${d['Status']==='Draft'
+          ? `<button class="btn-sm btn-blue" onclick="editDraft('${d['DFR#']}')">Edit</button>`
+          : `<button class="btn-sm btn-blue" onclick="viewDFR('${d['DFR#']}')">View</button>`}
+        <button class="btn-sm btn-red" onclick="openDeleteModal('${d['DFR#']}','DFR','${d['DFR#']} — ${(d['Foreman']||'').replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function populateFilterDropdowns() {
+  const contracts = [...new Set(allDFRs.map(d=>d['RSS Job#']).filter(Boolean))];
+  ['f-job','ex-job'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">All Jobs</option>';
+    contracts.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    if (cur) sel.value = cur;
+  });
+}
+
+function applyFilters() {
+  const status  = document.getElementById('f-status').value;
+  const job     = document.getElementById('f-job').value;
+  const foreman = document.getElementById('f-foreman').value.toLowerCase();
+  const from    = document.getElementById('f-from').value;
+  const to      = document.getElementById('f-to').value;
+  const filtered = allDFRs.filter(d => {
+    if (status  && d['Status']   !== status)  return false;
+    if (job     && d['RSS Job#'] !== job)     return false;
+    if (foreman && !(d['Foreman']||'').toLowerCase().includes(foreman)) return false;
+    if (from    && d['Date'] < from)          return false;
+    if (to      && d['Date'] > to)            return false;
+    return true;
+  });
+  renderDFRs(filtered);
+}
+
+function resetFilters() {
+  ['f-status','f-job'].forEach(id=>document.getElementById(id).value='');
+  ['f-foreman'].forEach(id=>document.getElementById(id).value='');
+  ['f-from','f-to'].forEach(id=>document.getElementById(id).value='');
+  renderDFRs(allDFRs);
+}
+
+function editDraft(dfrNum) { window.location.href = `dfr.html?dfr=${dfrNum}`; }
+function viewDFR(dfrNum)   { window.open(`dfr.html?dfr=${dfrNum}`, '_blank'); }
+
+// ── LABOR EXPORT ──────────────────────────────────────────────────────────────
+function applyQuickRange() {
+  const range = document.getElementById('ex-range').value;
+  if (!range) return;
+  const today = new Date();
+  const fmt = d => d.toISOString().slice(0,10);
+  let from, to;
+  if (range === 'today') {
+    from = to = fmt(today);
+  } else if (range === 'week') {
+    const day = today.getDay();
+    const mon = new Date(today); mon.setDate(today.getDate() - (day===0?6:day-1));
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    from = fmt(mon); to = fmt(sun);
+  } else if (range === 'lastweek') {
+    const day = today.getDay();
+    const mon = new Date(today); mon.setDate(today.getDate() - (day===0?6:day-1) - 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    from = fmt(mon); to = fmt(sun);
+  } else if (range === 'month') {
+    from = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+    to   = fmt(new Date(today.getFullYear(), today.getMonth()+1, 0));
+  } else if (range === 'lastmonth') {
+    from = fmt(new Date(today.getFullYear(), today.getMonth()-1, 1));
+    to   = fmt(new Date(today.getFullYear(), today.getMonth(), 0));
+  }
+  document.getElementById('ex-from').value = from;
+  document.getElementById('ex-to').value   = to;
+}
+
+function buildExportPreview() {
+  const from    = document.getElementById('ex-from').value;
+  const to      = document.getElementById('ex-to').value;
+  const job     = document.getElementById('ex-job').value;
+  const foreman = document.getElementById('ex-foreman').value.toLowerCase();
+  const status  = document.getElementById('ex-status').value;
+
+  // Filter DFRs
+  const filtered = allDFRs.filter(d => {
+    if (status  && d['Status']   !== status)  return false;
+    if (job     && d['RSS Job#'] !== job)     return false;
+    if (foreman && !(d['Foreman']||'').toLowerCase().includes(foreman)) return false;
+    if (from    && d['Date'] < from)          return false;
+    if (to      && d['Date'] > to)            return false;
+    return true;
+  });
+
+  // Expand to one row per employee per DFR
+  exportRows = [];
+  filtered.forEach(d => {
+    let employees = [];
+    try { employees = JSON.parse(d['Employees JSON']||'[]'); } catch(e){}
+
+    if (!employees.length) {
+      // Include DFR with no employees as a single row with blank employee fields
+      exportRows.push(buildExportRow(d, null));
+    } else {
+      employees.forEach(emp => {
+        exportRows.push(buildExportRow(d, emp));
+      });
+    }
+  });
+
+  const tbody = document.getElementById('export-tbody');
+  tbody.innerHTML = '';
+
+  if (!exportRows.length) {
+    document.getElementById('export-preview-container').style.display = 'none';
+    document.getElementById('export-empty').style.display = 'block';
+    document.getElementById('btn-export').disabled = true;
+    return;
+  }
+
+  document.getElementById('export-empty').style.display = 'none';
+  document.getElementById('export-preview-container').style.display = 'block';
+  document.getElementById('export-count').textContent = `${exportRows.length} rows across ${filtered.length} DFRs`;
+  document.getElementById('btn-export').disabled = false;
+
+  exportRows.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = row.map(cell => `<td style="white-space:nowrap;font-size:12px;">${cell||''}</td>`).join('');
+    tbody.appendChild(tr);
+  });
+}
+
+function buildExportRow(d, emp) {
+  return [
+    d['DFR#']||'',
+    d['Date']||'',
+    d['Day']||'',
+    d['RSS Job#']||'',
+    d['Job Name']||'',
+    d['Vista#']||'',
+    d['Customer']||'',
+    d['Owner']||'',
+    d['Super/RSS PM']||'',
+    d['Foreman']||'',
+    d['Project']||'',
+    d['Address']||'',
+    d['Town']||'',
+    d['County']||'',
+    d['Left Yard']||'',
+    d['Arrive Job']||'',
+    d['Left Job']||'',
+    d['Arrive Yard']||'',
+    d['Drive Time']||'',
+    d['Fuel Receipts']||'',
+    d['Weather AM']||'',
+    d['Weather PM']||'',
+    d['T&M Used']||'No',
+    d['Injuries Reported']||'N',
+    d['Equipment Issues Reported']||'N',
+    emp ? emp.name||'' : '',
+    emp ? emp.union||'' : '',
+    emp ? emp.local||'' : '',
+    emp ? emp.regHrs||'' : '',
+    emp ? emp.otHrs||'' : '',
+    emp ? emp.driveHrs||'' : '',
+    emp ? emp.totalHrs||'' : '',
+    d['Special Instructions']||'',
+  ];
+}
+
+function downloadCSV() {
+  if (!exportRows.length) return;
+  const headers = [
+    'DFR#','Date','Day','RSS Job#','Job Name','Vista#','Customer','Owner','Super/PM','Foreman',
+    'Project','Address','Town','County','Left Yard','Arrive Job','Left Job','Arrive Yard',
+    'Drive Time','Fuel Receipts','Weather AM','Weather PM','T&M Used','Injuries','Equip Issues',
+    'Employee Name','Union','Local','Reg Hrs','OT Hrs','Drive Hrs','Total Hrs','Special Instructions'
+  ];
+  const csvRows = [headers, ...exportRows];
+  const csv = csvRows.map(row =>
+    row.map(cell => {
+      const s = String(cell||'').replace(/"/g,'""');
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+    }).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const from = document.getElementById('ex-from').value || 'all';
+  const to   = document.getElementById('ex-to').value   || 'dates';
+  a.href = url;
+  a.download = `RSS_Labor_${from}_to_${to}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV downloaded');
+}
+
+// ── ADMIN LOCK ────────────────────────────────────────────────────────────────
+function checkAdminPwd() {
+  if (document.getElementById('admin-pwd').value !== ADMIN_PASSWORD) {
+    document.getElementById('admin-error').textContent = 'Incorrect password.';
+    document.getElementById('admin-pwd').value = '';
+    return;
+  }
+  document.getElementById('admin-lock-panel').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'block';
+}
+function lockAdmin() {
+  document.getElementById('admin-lock-panel').style.display = 'block';
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('admin-pwd').value = '';
+  document.getElementById('admin-error').textContent = '';
+}
+function switchAdminTab(name) {
+  const tabs = ['jobs','items','employees'];
+  tabs.forEach((t,i) => {
+    document.querySelectorAll('.admin-tab')[i].classList.toggle('active', t===name);
+    document.getElementById(`admin-${t}`).classList.toggle('active', t===name);
+  });
+}
+
+// ── ADMIN: JOBS ───────────────────────────────────────────────────────────────
+function renderJobsAdmin() {
+  const tbody = document.getElementById('jobs-tbody');
+  tbody.innerHTML = '';
+  allJobs.forEach(j => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${j['Contract#']||''}" id="jc-${j['Job ID']}" style="width:110px;"></td>
+      <td><input type="text" value="${j['Job Name']||''}" id="jn-${j['Job ID']}" style="width:200px;"></td>
+      <td><input type="text" value="${j['Vista#']||''}" id="jv-${j['Job ID']}" style="width:80px;"></td>
+      <td><input type="text" value="${j['Customer']||''}" id="jcu-${j['Job ID']}" style="width:100px;"></td>
+      <td><input type="text" value="${j['Super/RSS PM']||''}" id="jsp-${j['Job ID']}" style="width:120px;"></td>
+      <td><select id="jst-${j['Job ID']}" style="width:90px;"><option${j['Status']==='Active'?' selected':''}>Active</option><option${j['Status']==='Inactive'?' selected':''}>Inactive</option></select></td>
+      <td style="white-space:nowrap;display:flex;gap:6px;">
+        <button class="btn-sm btn-green" onclick="saveJob('${j['Job ID']}')">Save</button>
+        <button class="btn-sm btn-red" onclick="openDeleteModal('${j['Job ID']}','job','${j['Contract#']} — ${j['Job Name'].replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function addJob() {
+  const contractNum = document.getElementById('new-job-contract').value.trim();
+  const jobName     = document.getElementById('new-job-name').value.trim();
+  if (!contractNum||!jobName) { showToast('Contract # and Job Name required', true); return; }
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+    action:'addJob', contractNum, jobName,
+    vistaNum: document.getElementById('new-job-vista').value,
+    customer: document.getElementById('new-job-customer').value,
+    owner:    document.getElementById('new-job-owner').value,
+    superPM:  document.getElementById('new-job-super').value,
+  })});
+  const data = await res.json();
+  if (data.success) {
+    showToast('Job added');
+    ['new-job-contract','new-job-name','new-job-vista','new-job-customer','new-job-owner','new-job-super'].forEach(id=>document.getElementById(id).value='');
+    await loadAll();
+  } else showToast('Error adding job', true);
+}
+
+async function saveJob(jobId) {
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+    action:'updateJob', jobId,
+    contractNum: document.getElementById(`jc-${jobId}`).value,
+    jobName:     document.getElementById(`jn-${jobId}`).value,
+    vistaNum:    document.getElementById(`jv-${jobId}`).value,
+    customer:    document.getElementById(`jcu-${jobId}`).value,
+    superPM:     document.getElementById(`jsp-${jobId}`).value,
+    status:      document.getElementById(`jst-${jobId}`).value,
+  })});
+  const data = await res.json();
+  if (data.success) { showToast('Job saved'); await loadAll(); }
+  else showToast('Error saving job', true);
+}
+
+// ── ADMIN: ITEMS ──────────────────────────────────────────────────────────────
+function populateAdminJobDropdowns() {
+  ['new-item-job','item-filter-job'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = id==='item-filter-job' ? '<option value="">All Jobs</option>' : '<option value="">Select Job</option>';
+    allJobs.forEach(j => {
+      const opt = document.createElement('option');
+      opt.value = j['Job ID'];
+      opt.textContent = `${j['Contract#']} — ${j['Job Name']}`;
+      sel.appendChild(opt);
+    });
+    if (cur) sel.value = cur;
+  });
+}
+
+function renderItems() {
+  const filterJob = document.getElementById('item-filter-job')?.value||'';
+  const tbody = document.getElementById('items-tbody');
+  tbody.innerHTML = '';
+  const filtered = filterJob ? allItems.filter(i=>i['Job ID']===filterJob) : allItems;
+  filtered.forEach(item => {
+    const job = allJobs.find(j=>j['Job ID']===item['Job ID']);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${item['Item#']||''}" id="inum-${item['Item ID']}" style="width:100px;"></td>
+      <td><input type="text" value="${item['Description']||''}" id="idesc-${item['Item ID']}" style="width:240px;"></td>
+      <td><input type="text" value="${item['Unit']||''}" id="iunit-${item['Item ID']}" style="width:70px;"></td>
+      <td style="font-size:12px;color:var(--label);">${job?job['Contract#']:''}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn-sm btn-green" onclick="saveItem('${item['Item ID']}','${item['Job ID']}')">Save</button>
+        <button class="btn-sm btn-red" onclick="openDeleteModal('${item['Item ID']}','item','Item ${item['Item#']}')">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function addItem() {
+  const jobId = document.getElementById('new-item-job').value;
+  const itemNum = document.getElementById('new-item-num').value.trim();
+  const description = document.getElementById('new-item-desc').value.trim();
+  if (!jobId||!itemNum||!description) { showToast('Job, Item #, and Description required', true); return; }
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+    action:'addItem', jobId, itemNum, description,
+    unit: document.getElementById('new-item-unit').value,
+  })});
+  const data = await res.json();
+  if (data.success) {
+    showToast('Item added');
+    ['new-item-num','new-item-desc','new-item-unit'].forEach(id=>document.getElementById(id).value='');
+    await loadAll();
+  } else showToast('Error adding item', true);
+}
+
+async function saveItem(itemId, jobId) {
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+    action:'updateItem', itemId, jobId,
+    itemNum:     document.getElementById(`inum-${itemId}`).value,
+    description: document.getElementById(`idesc-${itemId}`).value,
+    unit:        document.getElementById(`iunit-${itemId}`).value,
+  })});
+  const data = await res.json();
+  if (data.success) { showToast('Item saved'); await loadAll(); }
+  else showToast('Error saving item', true);
+}
+
+// ── ADMIN: EMPLOYEES ──────────────────────────────────────────────────────────
+function renderEmployeesAdmin() {
+  const tbody = document.getElementById('emp-admin-tbody');
+  tbody.innerHTML = '';
+  allEmployees.forEach(e => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${e['Name']||''}" id="en-${e['Employee ID']}" style="width:180px;"></td>
+      <td><input type="text" value="${e['Union']||''}" id="eu-${e['Employee ID']}" style="width:100px;"></td>
+      <td><input type="text" value="${e['Local']||''}" id="el-${e['Employee ID']}" style="width:70px;"></td>
+      <td><select id="ea-${e['Employee ID']}" style="width:80px;"><option${e['Active']==='Yes'?' selected':''}>Yes</option><option${e['Active']==='No'?' selected':''}>No</option></select></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn-sm btn-green" onclick="saveEmployee('${e['Employee ID']}')">Save</button>
+        <button class="btn-sm btn-red" onclick="openDeleteModal('${e['Employee ID']}','employee','${e['Name'].replace(/'/g,"\\'")}')">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function addEmployee() {
+  const name = document.getElementById('new-emp-name').value.trim();
+  if (!name) { showToast('Employee name required', true); return; }
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+    action:'addEmployee', name,
+    union: document.getElementById('new-emp-union').value,
+    local: document.getElementById('new-emp-local').value,
+  })});
+  const data = await res.json();
+  if (data.success) {
+    showToast('Employee added');
+    ['new-emp-name','new-emp-union','new-emp-local'].forEach(id=>document.getElementById(id).value='');
+    await loadAll();
+  } else showToast('Error adding employee', true);
+}
+
+async function saveEmployee(empId) {
+  const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({
+    action:'updateEmployee', empId,
+    name:   document.getElementById(`en-${empId}`).value,
+    union:  document.getElementById(`eu-${empId}`).value,
+    local:  document.getElementById(`el-${empId}`).value,
+    active: document.getElementById(`ea-${empId}`).value,
+  })});
+  const data = await res.json();
+  if (data.success) { showToast('Employee saved'); await loadAll(); }
+  else showToast('Error saving employee', true);
+}
+
+// ── DELETE MODAL ──────────────────────────────────────────────────────────────
+function openDeleteModal(id, type, label) {
+  pendingDelete = {id, type};
+  document.getElementById('del-modal-info').textContent = `Delete: ${label}`;
+  document.getElementById('del-pwd').value = '';
+  document.getElementById('del-error').textContent = '';
+  document.getElementById('del-confirm-btn').disabled = false;
+  document.getElementById('del-confirm-btn').textContent = 'Delete';
+  document.getElementById('delete-modal').classList.add('active');
+  setTimeout(()=>document.getElementById('del-pwd').focus(), 100);
+}
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('active');
+  pendingDelete = null;
+}
+document.getElementById('delete-modal').addEventListener('click', e=>{ if(e.target===e.currentTarget)closeDeleteModal(); });
+
+async function confirmDelete() {
+  if (document.getElementById('del-pwd').value !== ADMIN_PASSWORD) {
+    document.getElementById('del-error').textContent = 'Incorrect password.';
+    document.getElementById('del-pwd').value = '';
+    return;
+  }
+  const btn = document.getElementById('del-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  const {id, type} = pendingDelete;
+  const actionMap = {DFR:'deleteDFR', job:'deleteJob', item:'deleteItem', employee:'deleteEmployee'};
+  const keyMap    = {DFR:'dfrNum',    job:'jobId',     item:'itemId',     employee:'empId'};
+  try {
+    const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:actionMap[type],[keyMap[type]]:id})});
+    const data = await res.json();
+    if (data.success) { closeDeleteModal(); showToast('Deleted'); await loadAll(); }
+    else { document.getElementById('del-error').textContent = data.error||'Delete failed'; btn.disabled=false; btn.textContent='Delete'; }
+  } catch(e) { document.getElementById('del-error').textContent='Network error'; btn.disabled=false; btn.textContent='Delete'; }
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show'+(isError?' error':'');
+  setTimeout(()=>t.className='toast', 3500);
+}
+</script>
+</body>
+</html>
